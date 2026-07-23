@@ -45,6 +45,10 @@
       --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
 
       --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+      /* Responsive Layout Constants */
+      --sidebar-width: 260px;
+      --header-height: clamp(60px, 8vh, 72px);
     }
 
     [data-theme="dark"] {
@@ -69,6 +73,11 @@
       padding: 0;
     }
 
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--bg-main);
@@ -78,9 +87,17 @@
       display: flex;
       flex-direction: column;
       transition: background-color 0.3s ease, color 0.3s ease;
+      font-size: clamp(0.85rem, 0.8vw + 0.6rem, 1rem);
     }
 
     a { text-decoration: none; color: inherit; }
+
+    /* SVG Icon Safeguard */
+    svg {
+      max-width: 100%;
+      height: auto;
+      flex-shrink: 0;
+    }
 
     /* ==========================================================================
        LAYOUT STRUCTURE
@@ -93,10 +110,10 @@
 
     /* Sidebar Navigation */
     .sidebar {
-      width: 260px;
+      width: var(--sidebar-width);
       background-color: var(--bg-sidebar);
       border-right: 1px solid var(--border);
-      padding: 24px 16px;
+      padding: clamp(16px, 2vh, 24px) 16px;
       display: flex;
       flex-direction: column;
       position: fixed;
@@ -111,7 +128,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 0 12px 28px 12px;
+      padding: 0 12px clamp(16px, 2vh, 28px) 12px;
     }
 
     .brand-icon {
@@ -127,7 +144,7 @@
     }
 
     .brand-name {
-      font-size: 1.4rem;
+      font-size: clamp(1.2rem, 1.5vw, 1.4rem);
       font-weight: 800;
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, var(--text-main), var(--primary));
@@ -168,55 +185,61 @@
     /* Main Content Area */
     .main-wrapper {
       flex: 1;
-      margin-left: 260px;
+      margin-left: var(--sidebar-width);
       display: flex;
       flex-direction: column;
       min-width: 0;
+      width: calc(100% - var(--sidebar-width));
+      transition: var(--transition);
     }
 
     /* Top Header */
     .top-header {
-      height: 72px;
+      height: var(--header-height);
       background-color: var(--bg-card);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 32px;
+      padding: 0 clamp(16px, 3vw, 32px);
       position: sticky;
       top: 0;
       z-index: 90;
+      gap: 16px;
     }
 
     .header-title h1 {
-      font-size: 1.5rem;
+      font-size: clamp(1.1rem, 1.5vw, 1.5rem);
       font-weight: 700;
+      line-height: 1.2;
     }
 
     .header-title p {
-      font-size: 0.85rem;
+      font-size: clamp(0.75rem, 0.9vw, 0.85rem);
       color: var(--text-muted);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: clamp(8px, 1.5vw, 16px);
+      flex-shrink: 0;
     }
 
     .theme-toggle, .unit-toggle {
       background: var(--bg-main);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 8px 12px;
+      padding: clamp(6px, 1vw, 8px) clamp(8px, 1.2vw, 12px);
       border-radius: var(--radius-md);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: clamp(0.75rem, 0.9vw, 0.85rem);
       transition: var(--transition);
+      white-space: nowrap;
     }
 
     .theme-toggle:hover, .unit-toggle:hover {
@@ -225,24 +248,26 @@
 
     /* Main Body Layout */
     .content-body {
-      padding: 32px;
-      max-width: 1400px;
+      padding: clamp(16px, 2.5vw, 32px);
+      max-width: 1600px;
       width: 100%;
       margin: 0 auto;
+      box-sizing: border-box;
     }
 
     .profile-split {
       display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 32px;
+      grid-template-columns: clamp(280px, 25vw, 340px) minmax(0, 1fr);
+      gap: clamp(16px, 2.5vw, 32px);
     }
 
     .card {
       background-color: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 24px;
+      padding: clamp(16px, 2vw, 24px);
       box-shadow: var(--shadow-sm);
+      min-width: 0;
     }
 
     /* Profile Avatar Card */
@@ -254,30 +279,33 @@
     }
 
     .avatar-wrapper {
-      width: 110px;
-      height: 110px;
+      width: clamp(80px, 8vw, 110px);
+      height: clamp(80px, 8vw, 110px);
       border-radius: 50%;
       background: linear-gradient(135deg, var(--primary), #34D399);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-white);
-      font-size: 2.8rem;
+      font-size: clamp(2rem, 3vw, 2.8rem);
       font-weight: 800;
       margin-bottom: 16px;
       box-shadow: 0 6px 20px var(--primary-glow);
+      flex-shrink: 0;
     }
 
     .user-name-title {
-      font-size: 1.3rem;
+      font-size: clamp(1.1rem, 1.3vw, 1.3rem);
       font-weight: 800;
       margin-bottom: 4px;
+      word-break: break-word;
     }
 
     .user-bio-subtitle {
-      font-size: 0.85rem;
+      font-size: clamp(0.75rem, 0.85vw, 0.85rem);
       color: var(--text-muted);
       margin-bottom: 20px;
+      word-break: break-word;
     }
 
     .summary-pills {
@@ -292,15 +320,16 @@
     .pill-item {
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
+      font-size: clamp(0.75rem, 0.85vw, 0.85rem);
+      gap: 8px;
     }
 
     .pill-item span:first-child { color: var(--text-muted); }
-    .pill-item span:last-child { font-weight: 700; }
+    .pill-item span:last-child { font-weight: 700; text-align: right; word-break: break-word; }
 
     /* Form Card */
     .section-title {
-      font-size: 1.1rem;
+      font-size: clamp(1rem, 1.2vw, 1.1rem);
       font-weight: 800;
       margin-bottom: 20px;
       display: flex;
@@ -310,8 +339,8 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(12px, 1.8vw, 20px);
     }
 
     .form-group {
@@ -323,7 +352,7 @@
     .form-group.full { grid-column: span 2; }
 
     .form-group label {
-      font-size: 0.85rem;
+      font-size: clamp(0.8rem, 0.85vw, 0.85rem);
       font-weight: 700;
       color: var(--text-muted);
     }
@@ -332,33 +361,44 @@
       background-color: var(--bg-main);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 10px 14px;
+      padding: clamp(8px, 1vw, 10px) clamp(10px, 1.2vw, 14px);
       border-radius: var(--radius-md);
       font-family: inherit;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: clamp(0.85rem, 0.9vw, 0.9rem);
       outline: none;
       transition: var(--transition);
+      width: 100%;
     }
 
     .form-control:focus {
       border-color: var(--primary);
     }
 
+    .form-actions-wrapper {
+      margin-top: 24px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     .btn-primary {
       background-color: var(--primary);
       color: var(--text-white);
       border: none;
-      padding: 12px 24px;
+      padding: clamp(10px, 1.2vw, 12px) clamp(16px, 1.8vw, 24px);
       border-radius: var(--radius-md);
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: clamp(0.85rem, 0.95vw, 0.95rem);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       transition: var(--transition);
       box-shadow: 0 4px 12px var(--primary-glow);
+      white-space: nowrap;
     }
 
     .btn-primary:hover {
@@ -370,12 +410,13 @@
       background: transparent;
       border: 1px solid var(--danger);
       color: var(--danger);
-      padding: 10px 20px;
+      padding: clamp(8px, 1vw, 10px) clamp(14px, 1.5vw, 20px);
       border-radius: var(--radius-md);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: clamp(0.8rem, 0.9vw, 0.9rem);
       cursor: pointer;
       transition: var(--transition);
+      white-space: nowrap;
     }
 
     .btn-danger-outline:hover {
@@ -387,11 +428,11 @@
       background-color: var(--bg-main);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 16px;
+      padding: clamp(12px, 1.5vw, 16px);
       margin-top: 24px;
       display: flex;
       gap: 12px;
-      font-size: 0.85rem;
+      font-size: clamp(0.75rem, 0.85vw, 0.85rem);
       color: var(--text-muted);
     }
 
@@ -430,18 +471,43 @@
     .mobile-nav-item.active a { color: var(--primary); }
 
     /* Responsive */
+    @media (max-width: 1200px) {
+      :root {
+        --sidebar-width: 220px;
+      }
+    }
+
     @media (max-width: 1024px) {
       .profile-split { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 768px) {
+      :root {
+        --sidebar-width: 0px;
+      }
       .sidebar { display: none; }
-      .main-wrapper { margin-left: 0; padding-bottom: 64px; }
+      .main-wrapper { margin-left: 0; width: 100%; padding-bottom: 64px; }
       .mobile-nav { display: block; }
       .top-header { padding: 0 16px; }
       .content-body { padding: 16px; }
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: span 1; }
+    }
+
+    @media (max-width: 480px) {
+      .top-header {
+        padding: 0 12px;
+      }
+
+      .form-actions-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .form-actions-wrapper button {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -588,7 +654,7 @@
 
               </div>
 
-              <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center;">
+              <div class="form-actions-wrapper">
                 <button type="submit" class="btn-primary">
                   <i data-lucide="save"></i>
                   <span>Save Profile</span>
