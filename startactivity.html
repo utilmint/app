@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UtilMint - Start Real-Time Activity</title>
+  <!-- Google Fonts, Lucide Icons, and Leaflet CSS/JS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEME SETUP
+       ========================================================================== */
+    :root {
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-light: #ECFDF5;
+      --primary-glow: rgba(16, 185, 129, 0.15);
+      
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #FFFFFF;
+      --border: #E2E8F0;
+      
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-white: #FFFFFF;
+      
+      --accent-run: #10B981;
+      --accent-jog: #F97316;
+      --accent-walk: #8B5CF6;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+      
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dark Theme Overrides */
+    [data-theme="dark"] {
+      --bg-main: #0F172A;
+      --bg-card: #1E293B;
+      --bg-sidebar: #1E293B;
+      --border: #334155;
+      
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      
+      --primary-light: rgba(16, 185, 129, 0.1);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+    }
+
+    /* Reset & Base Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ==========================================================================
+       LAYOUT STRUCTURE
+       ========================================================================== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Sidebar Navigation (Desktop) */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 28px 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), #34D399);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .brand-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-main), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .nav-item a:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-item.active a {
+      background-color: var(--primary);
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* Main Content Area */
+    .main-wrapper {
+      flex: 1;
+      margin-left: 260px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* Header Bar */
+    .top-header {
+      height: 72px;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    .header-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle, .unit-toggle, .voice-toggle {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover, .unit-toggle:hover, .voice-toggle:hover {
+      border-color: var(--primary);
+    }
+
+    .voice-toggle.active {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Tracking Layout */
+    .activity-container {
+      padding: 24px 32px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Map Box */
+    .map-wrapper {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+      position: relative;
+      box-shadow: var(--shadow-md);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* GPS Status Overlay Banner */
+    .gps-banner {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      color: white;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+    }
+
+    .gps-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--warning);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.connected { background-color: var(--primary); }
+    .status-dot.error { background-color: var(--danger); }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    /* Control Panel Sidebar (Right side) */
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .panel-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .activity-type-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .type-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 8px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-main);
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .type-btn:hover { border-color: var(--primary); }
+
+    .type-btn.active[data-type="running"] {
+      border-color: var(--accent-run);
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--accent-run);
+    }
+
+    .type-btn.active[data-type="jogging"] {
+      border-color: var(--accent-jog);
+      background-color: rgba(249, 115, 22, 0.1);
+      color: var(--accent-jog);
+    }
+
+    .type-btn.active[data-type="walking"] {
+      border-color: var(--accent-walk);
+      background-color: rgba(139, 92, 246, 0.1);
+      color: var(--accent-walk);
+    }
+
+    /* Live Timer & Big Numbers */
+    .timer-display {
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .timer-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .timer-value {
+      font-size: 3.2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-top: 4px;
+    }
+
+    .stats-2x2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .mini-stat-card {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      text-align: center;
+    }
+
+    .mini-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .mini-stat-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Control Buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: auto;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      font-weight: 800;
+      font-size: 1.1rem;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-start { background-color: var(--primary); color: var(--text-white); }
+    .btn-start:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+
+    .btn-pause { background-color: var(--warning); color: var(--text-white); }
+    .btn-pause:hover { opacity: 0.9; }
+
+    .btn-resume { background-color: var(--primary); color: var(--text-white); }
+    .btn-finish { background-color: var(--danger); color: var(--text-white); }
+
+    .paired-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      max-width: 440px;
+      width: 90%;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+
+    .modal-card h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 12px; }
+    .modal-card p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; }
+
+    /* ==========================================================================
+       MOBILE NAVIGATION
+       ========================================================================== */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      padding: 0 12px;
+    }
+
+    .mobile-nav-list {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 100%;
+      list-style: none;
+    }
+
+    .mobile-nav-item a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .mobile-nav-item.active a { color: var(--primary); }
+
+    @media (max-width: 1024px) {
+      .activity-container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .map-wrapper { height: 380px; }
+      .control-panel { height: auto; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-wrapper { margin-left: 0; padding-bottom: 64px; }
+      .mobile-nav { display: block; }
+      .top-header { padding: 0 16px; }
+      .activity-container { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <span class="brand-name">UtilMint</span>
+      </div>
+
+      <nav>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="index.html">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a href="startactivity.html">
+              <i data-lucide="play-circle"></i>
+              <span>Start Activity</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="progress.html">
+              <i data-lucide="line-chart"></i>
+              <span>Progress</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="goals.html">
+              <i data-lucide="target"></i>
+              <span>Goals</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="profile.html">
+              <i data-lucide="user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+      
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1>Real-Time Activity Session</h1>
+        </div>
+
+        <div class="header-actions">
+          <button class="voice-toggle active" id="voiceToggleBtn" title="Toggle Voice Feedback">
+            <i data-lucide="volume-2" id="voiceIcon"></i>
+            <span id="voiceText">Voice: ON</span>
+          </button>
+
+          <button class="unit-toggle" id="unitToggleBtn">
+            <i data-lucide="ruler"></i>
+            <span id="unitText">KM</span>
+          </button>
+
+          <button class="theme-toggle" id="themeToggleBtn">
+            <i data-lucide="sun" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <main class="activity-container">
+        
+        <!-- REAL MAP CONTAINER -->
+        <div class="map-wrapper">
+          <div class="gps-banner">
+            <div class="gps-status-indicator">
+              <div class="status-dot" id="gpsDot"></div>
+              <span id="gpsStatusText">Searching for GPS location...</span>
+            </div>
+            <span id="gpsAccuracyText">Accuracy: --</span>
+          </div>
+
+          <div id="map"></div>
+        </div>
+
+        <!-- CONTROLS & DASHBOARD PANEL -->
+        <div class="control-panel">
+          
+          <!-- Activity Type Selection -->
+          <div class="panel-card">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); margin-bottom:12px;">
+              SELECT ACTIVITY TYPE
+            </div>
+            <div class="activity-type-selector">
+              <button class="type-btn active" data-type="running">
+                <i data-lucide="flame"></i>
+                <span>Run</span>
+              </button>
+              <button class="type-btn" data-type="jogging">
+                <i data-lucide="zap"></i>
+                <span>Jog</span>
+              </button>
+              <button class="type-btn" data-type="walking">
+                <i data-lucide="footprints"></i>
+                <span>Walk</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Real Time Telemetry Card -->
+          <div class="panel-card" style="flex: 1; display: flex; flex-direction: column;">
+            
+            <div class="timer-display">
+              <div class="timer-label" id="sessionStatusLabel">Ready to Track</div>
+              <div class="timer-value" id="displayTimer">00:00:00</div>
+            </div>
+
+            <div class="stats-2x2">
+              <div class="mini-stat-card">
+                <div class="mini-stat-label">DISTANCE</div>
+                <div class="mini-stat-val"><span id="displayDistance">0.00</span> <span id="unitLabelDistance" style="font-size:0.8rem;">km</span></div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-label">AVG PACE</div>
+                <div class="mini-stat-val" id="displayPace">--'--"</div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-label">CURRENT SPEED</div>
+                <div class="mini-stat-val"><span id="displaySpeed">0.0</span> <span id="unitLabelSpeed" style="font-size:0.8rem;">km/h</span></div>
+              </div>
+
+              <div class="mini-stat-card">
+                <div class="mini-stat-label">GPS COORDS</div>
+                <div class="mini-stat-val" id="displayCoords" style="font-size:0.75rem; padding-top:4px;">--</div>
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="action-buttons" style="margin-top:24px;">
+              
+              <!-- Start State -->
+              <button class="btn-action btn-start" id="startBtn">
+                <i data-lucide="play"></i>
+                <span>START ACTIVITY</span>
+              </button>
+
+              <!-- Active/Paused State -->
+              <div class="paired-btns" id="activeControls" style="display: none;">
+                <button class="btn-action btn-pause" id="pauseBtn">
+                  <i data-lucide="pause"></i>
+                  <span>PAUSE</span>
+                </button>
+                <button class="btn-action btn-finish" id="finishBtn">
+                  <i data-lucide="square"></i>
+                  <span>FINISH</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- MOBILE NAVIGATION -->
+    <nav class="mobile-nav">
+      <ul class="mobile-nav-list">
+        <li class="mobile-nav-item">
+          <a href="index.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+        </li>
+        <li class="mobile-nav-item active">
+          <a href="startactivity.html"><i data-lucide="play-circle"></i><span>Start</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="progress.html"><i data-lucide="line-chart"></i><span>Progress</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="goals.html"><i data-lucide="target"></i><span>Goals</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="profile.html"><i data-lucide="user"></i><span>Profile</span></a>
+        </li>
+      </ul>
+    </nav>
+
+  </div>
+
+  <!-- FINISH SUMMARY MODAL -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal-card">
+      <div style="width: 56px; height: 56px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+        <i data-lucide="trophy" style="width: 28px; height: 28px;"></i>
+      </div>
+      <h3>Activity Completed!</h3>
+      <p>Great job! Here is your workout summary:</p>
+
+      <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; text-align: left;">
+        <div style="display:flex; justify-between; margin-bottom: 8px;">
+          <span style="color:var(--text-muted);">Total Distance:</span>
+          <strong id="modalDist">0.00 km</strong>
+        </div>
+        <div style="display:flex; justify-between; margin-bottom: 8px;">
+          <span style="color:var(--text-muted);">Duration:</span>
+          <strong id="modalDuration">00:00:00</strong>
+        </div>
+        <div style="display:flex; justify-between;">
+          <span style="color:var(--text-muted);">Average Pace:</span>
+          <strong id="modalPace">--'--"</strong>
+        </div>
+      </div>
+
+      <div class="paired-btns">
+        <button class="btn-action btn-finish" id="discardBtn" style="background: #94A3B8;">Discard</button>
+        <button class="btn-action btn-start" id="saveBtn">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* ==========================================================================
+       REAL TRACKING SYSTEM STATE & GLOBALS
+       ========================================================================== */
+    const STORAGE_KEYS = {
+      ACTIVITIES: 'utilmint_activities',
+      SETTINGS: 'utilmint_settings'
+    };
+
+    // Tracking Engine Variables
+    let watchId = null;
+    let isTracking = false;
+    let isPaused = false;
+    
+    let selectedType = 'running'; // running, jogging, walking
+    let voiceEnabled = true;
+
+    // Time calculations based on timestamps
+    let startTime = null;
+    let accumulatedActiveTime = 0; // ms
+    let lastResumeTime = null;
+    let timerInterval = null;
+
+    // GPS & Route Data
+    let routeCoordinates = []; // Array of [lat, lng]
+    let totalDistanceMeters = 0;
+    let lastPosition = null;
+    let currentSpeedMps = 0;
+
+    // Map & Polyline Instances
+    let map = null;
+    let userMarker = null;
+    let routePolyline = null;
+
+    /* ==========================================================================
+       UTILITIES & MATH
+       ========================================================================== */
+    function getSettings() {
+      const defaults = { theme: 'light', unit: 'KM' };
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
+      } catch(e) { return defaults; }
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    }
+
+    // Haversine Formula for Real GPS Distance (Meters)
+    function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // Radius of earth in meters
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function formatTimeHHMMSS(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      return [h, m, s].map(v => v < 10 ? '0' + v : v).join(':');
+    }
+
+    function speakAnnouncement(text) {
+      if (!voiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel(); // Clear queue
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* ==========================================================================
+       MAP INITIALIZATION
+       ========================================================================== */
+    function initMap() {
+      // Default to generic center until real GPS position is captured
+      map = L.map('map').setView([20.5937, 78.9629], 5);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      routePolyline = L.polyline([], {
+        color: '#10B981',
+        weight: 5,
+        opacity: 0.8
+      }).addTo(map);
+    }
+
+    /* ==========================================================================
+       REAL-TIME GPS GEOLOCATION HANDLERS
+       ========================================================================== */
+    function startGpsTracking() {
+      if (!('geolocation' in navigator)) {
+        updateGpsStatus('error', 'Geolocation not supported by browser', '--');
+        return;
+      }
+
+      updateGpsStatus('searching', 'Searching for GPS signal...', '--');
+
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      };
+
+      watchId = navigator.geolocation.watchPosition(handleGpsSuccess, handleGpsError, options);
+    }
+
+    function handleGpsSuccess(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy; // meters
+      const speed = position.coords.speed; // m/s (can be null)
+
+      updateGpsStatus('connected', 'GPS Signal Active', `±${Math.round(accuracy)}m`);
+      document.getElementById('displayCoords').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+      const newLatLng = [lat, lng];
+
+      // Update Map Marker
+      if (!userMarker) {
+        userMarker = L.marker(newLatLng).addTo(map);
+        map.setView(newLatLng, 17);
+      } else {
+        userMarker.setLatLng(newLatLng);
+      }
+
+      // If active session is running and NOT paused, track route & distance
+      if (isTracking && !isPaused) {
+        
+        // Filter out poor accuracy fixes (> 30 meters) to avoid GPS jumps
+        if (accuracy > 35) {
+          document.getElementById('gpsStatusText').textContent = 'Low Accuracy (Filtering)';
+          return;
+        }
+
+        if (lastPosition) {
+          const distMeters = calculateHaversineDistance(
+            lastPosition.lat, lastPosition.lng,
+            lat, lng
+          );
+
+          const timeDiffSec = (position.timestamp - lastPosition.timestamp) / 1000;
+
+          // Reject impossible physical speeds (> 35 km/h for running/walking)
+          const calculatedSpeedKmh = (distMeters / timeDiffSec) * 3.6;
+
+          if (distMeters > 2 && calculatedSpeedKmh < 35) {
+            totalDistanceMeters += distMeters;
+            routeCoordinates.push(newLatLng);
+            routePolyline.setLatLngs(routeCoordinates);
+            map.panTo(newLatLng);
+
+            // Announce voice milestone every 1 KM
+            const settings = getSettings();
+            const currentDistConverted = settings.unit === 'MI' 
+              ? totalDistanceMeters * 0.000621371 
+              : totalDistanceMeters / 1000;
+
+            const prevDistConverted = settings.unit === 'MI' 
+              ? (totalDistanceMeters - distMeters) * 0.000621371 
+              : (totalDistanceMeters - distMeters) / 1000;
+
+            if (Math.floor(currentDistConverted) > Math.floor(prevDistConverted) && Math.floor(currentDistConverted) > 0) {
+              speakAnnouncement(`Completed ${Math.floor(currentDistConverted)} ${settings.unit === 'MI' ? 'miles' : 'kilometer'}`);
+            }
+          }
+        } else {
+          routeCoordinates.push(newLatLng);
+        }
+
+        lastPosition = { lat, lng, timestamp: position.timestamp };
+        currentSpeedMps = speed !== null && !isNaN(speed) ? speed : 0;
+        updateStatsUI();
+      }
+    }
+
+    function handleGpsError(err) {
+      let msg = 'GPS Error';
+      switch(err.code) {
+        case err.PERMISSION_DENIED: msg = 'GPS Permission Denied'; break;
+        case err.POSITION_UNAVAILABLE: msg = 'Location Unavailable'; break;
+        case err.TIMEOUT: msg = 'GPS Timeout'; break;
+      }
+      updateGpsStatus('error', msg, '--');
+    }
+
+    function updateGpsStatus(state, text, accuracy) {
+      const dot = document.getElementById('gpsDot');
+      const statusText = document.getElementById('gpsStatusText');
+      const accuracyText = document.getElementById('gpsAccuracyText');
+
+      dot.className = 'status-dot ' + (state === 'connected' ? 'connected' : state === 'error' ? 'error' : '');
+      statusText.textContent = text;
+      accuracyText.textContent = `Accuracy: ${accuracy}`;
+    }
+
+    /* ==========================================================================
+       TIMER & TELEMETRY CALCULATIONS
+       ========================================================================== */
+    function getActiveDurationSeconds() {
+      if (!startTime) return 0;
+      let totalMs = accumulatedActiveTime;
+      if (isTracking && !isPaused) {
+        totalMs += (Date.now() - lastResumeTime);
+      }
+      return Math.floor(totalMs / 1000);
+    }
+
+    function updateStatsUI() {
+      const settings = getSettings();
+      const activeSeconds = getActiveDurationSeconds();
+
+      // Timer Display
+      document.getElementById('displayTimer').textContent = formatTimeHHMMSS(activeSeconds);
+
+      // Distance Display
+      const km = totalDistanceMeters / 1000;
+      const displayDist = settings.unit === 'MI' ? km * 0.621371 : km;
+      document.getElementById('displayDistance').textContent = displayDist.toFixed(2);
+      document.getElementById('unitLabelDistance').textContent = settings.unit.toLowerCase();
+
+      // Speed Display
+      const speedKmh = currentSpeedMps * 3.6;
+      const displaySpeed = settings.unit === 'MI' ? speedKmh * 0.621371 : speedKmh;
+      document.getElementById('displaySpeed').textContent = displaySpeed.toFixed(1);
+      document.getElementById('unitLabelSpeed').textContent = settings.unit === 'MI' ? 'mph' : 'km/h';
+
+      // Pace Display (Min per KM or MI)
+      if (displayDist > 0.01 && activeSeconds > 0) {
+        const paceSecondsPerUnit = activeSeconds / displayDist;
+        const paceMins = Math.floor(paceSecondsPerUnit / 60);
+        const paceSecs = Math.floor(paceSecondsPerUnit % 60);
+        document.getElementById('displayPace').textContent = `${paceMins}'${paceSecs < 10 ? '0' + paceSecs : paceSecs}"`;
+      } else {
+        document.getElementById('displayPace').textContent = `--'--"`;
+      }
+    }
+
+    /* ==========================================================================
+       SESSION CONTROLS (START, PAUSE, RESUME, FINISH)
+       ========================================================================== */
+    function startSession() {
+      isTracking = true;
+      isPaused = false;
+      startTime = Date.now();
+      lastResumeTime = startTime;
+      accumulatedActiveTime = 0;
+      totalDistanceMeters = 0;
+      routeCoordinates = [];
+      lastPosition = null;
+
+      routePolyline.setLatLngs([]);
+
+      // UI States
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('activeControls').style.display = 'grid';
+      document.getElementById('sessionStatusLabel').textContent = 'Tracking Active';
+      document.getElementById('sessionStatusLabel').style.color = 'var(--primary)';
+
+      timerInterval = setInterval(updateStatsUI, 1000);
+      speakAnnouncement(`Activity started. Tracking ${selectedType}`);
+    }
+
+    function pauseSession() {
+      if (!isTracking || isPaused) return;
+
+      isPaused = true;
+      accumulatedActiveTime += (Date.now() - lastResumeTime);
+      clearInterval(timerInterval);
+
+      document.getElementById('pauseBtn').innerHTML = `<i data-lucide="play"></i><span>RESUME</span>`;
+      document.getElementById('pauseBtn').className = 'btn-action btn-resume';
+      document.getElementById('sessionStatusLabel').textContent = 'Session Paused';
+      document.getElementById('sessionStatusLabel').style.color = 'var(--warning)';
+
+      speakAnnouncement("Activity paused");
+      lucide.createIcons();
+    }
+
+    function resumeSession() {
+      if (!isTracking || !isPaused) return;
+
+      isPaused = false;
+      lastResumeTime = Date.now();
+
+      document.getElementById('pauseBtn').innerHTML = `<i data-lucide="pause"></i><span>PAUSE</span>`;
+      document.getElementById('pauseBtn').className = 'btn-action btn-pause';
+      document.getElementById('sessionStatusLabel').textContent = 'Tracking Active';
+      document.getElementById('sessionStatusLabel').style.color = 'var(--primary)';
+
+      timerInterval = setInterval(updateStatsUI, 1000);
+      speakAnnouncement("Activity resumed");
+      lucide.createIcons();
+    }
+
+    function finishSession() {
+      if (!isTracking) return;
+
+      if (!isPaused) {
+        accumulatedActiveTime += (Date.now() - lastResumeTime);
+      }
+      clearInterval(timerInterval);
+
+      const settings = getSettings();
+      const activeSeconds = Math.floor(accumulatedActiveTime / 1000);
+      const km = totalDistanceMeters / 1000;
+      const displayDist = settings.unit === 'MI' ? (km * 0.621371).toFixed(2) : km.toFixed(2);
+
+      // Populate Modal
+      document.getElementById('modalDist').textContent = `${displayDist} ${settings.unit.toLowerCase()}`;
+      document.getElementById('modalDuration').textContent = formatTimeHHMMSS(activeSeconds);
+      document.getElementById('modalPace').textContent = document.getElementById('displayPace').textContent;
+
+      document.getElementById('saveModal').classList.add('active');
+      speakAnnouncement("Activity completed");
+    }
+
+    function saveActivityRecord() {
+      const activeSeconds = Math.floor(accumulatedActiveTime / 1000);
+      const km = totalDistanceMeters / 1000;
+
+      const record = {
+        id: 'act_' + Date.now(),
+        type: selectedType,
+        timestamp: new Date().toISOString(),
+        durationSeconds: activeSeconds,
+        distanceKm: km,
+        route: routeCoordinates
+      };
+
+      // Persistence
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+        const list = stored ? JSON.parse(stored) : [];
+        list.push(record);
+        localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(list));
+      } catch(e) {
+        console.error("Storage save failed", e);
+      }
+
+      window.location.href = 'index.html';
+    }
+
+    /* ==========================================================================
+       EVENT LISTENERS & THEME
+       ========================================================================== */
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const themeIcon = document.getElementById('themeIcon');
+      if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+        lucide.createIcons();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const settings = getSettings();
+      applyTheme(settings.theme);
+
+      document.getElementById('unitText').textContent = settings.unit;
+
+      initMap();
+      startGpsTracking();
+
+      // Controls
+      document.getElementById('startBtn').addEventListener('click', startSession);
+      document.getElementById('pauseBtn').addEventListener('click', () => {
+        if (isPaused) resumeSession(); else pauseSession();
+      });
+      document.getElementById('finishBtn').addEventListener('click', finishSession);
+
+      document.getElementById('saveBtn').addEventListener('click', saveActivityRecord);
+      document.getElementById('discardBtn').addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+
+      // Activity Selection
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          if (isTracking) return; // Locked during live tracking
+          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+          const target = e.currentTarget;
+          target.classList.add('active');
+          selectedType = target.getAttribute('data-type');
+        });
+      });
+
+      // Voice Feedback Toggle
+      document.getElementById('voiceToggleBtn').addEventListener('click', () => {
+        voiceEnabled = !voiceEnabled;
+        const btn = document.getElementById('voiceToggleBtn');
+        const text = document.getElementById('voiceText');
+        if (voiceEnabled) {
+          btn.classList.add('active');
+          text.textContent = 'Voice: ON';
+        } else {
+          btn.classList.remove('active');
+          text.textContent = 'Voice: OFF';
+        }
+      });
+
+      // Theme & Unit Toggle
+      document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.theme = current.theme === 'light' ? 'dark' : 'light';
+        saveSettings(current);
+        applyTheme(current.theme);
+      });
+
+      document.getElementById('unitToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.unit = current.unit === 'KM' ? 'MI' : 'KM';
+        saveSettings(current);
+        document.getElementById('unitText').textContent = current.unit;
+        updateStatsUI();
+      });
+
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

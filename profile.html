@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UtilMint - User Profile</title>
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEME SETUP
+       ========================================================================== */
+    :root {
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-light: #ECFDF5;
+      --primary-glow: rgba(16, 185, 129, 0.15);
+
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #FFFFFF;
+      --border: #E2E8F0;
+
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-white: #FFFFFF;
+
+      --accent-run: #10B981;
+      --accent-jog: #F97316;
+      --accent-walk: #8B5CF6;
+      --accent-blue: #3B82F6;
+      --danger: #EF4444;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0F172A;
+      --bg-card: #1E293B;
+      --bg-sidebar: #1E293B;
+      --border: #334155;
+
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+
+      --primary-light: rgba(16, 185, 129, 0.1);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+    }
+
+    /* Reset & Base Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ==========================================================================
+       LAYOUT STRUCTURE
+       ========================================================================== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 28px 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), #34D399);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .brand-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-main), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .nav-item a:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-item.active a {
+      background-color: var(--primary);
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* Main Content Area */
+    .main-wrapper {
+      flex: 1;
+      margin-left: 260px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* Top Header */
+    .top-header {
+      height: 72px;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    .header-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .header-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle, .unit-toggle {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover, .unit-toggle:hover {
+      border-color: var(--primary);
+    }
+
+    /* Main Body Layout */
+    .content-body {
+      padding: 32px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .profile-split {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 32px;
+    }
+
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Profile Avatar Card */
+    .avatar-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .avatar-wrapper {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #34D399);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .user-name-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .user-bio-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .summary-pills {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .pill-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .pill-item span:first-child { color: var(--text-muted); }
+    .pill-item span:last-child { font-weight: 700; }
+
+    /* Form Card */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full { grid-column: span 2; }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: var(--text-white);
+      border: none;
+      padding: 12px 24px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-danger-outline:hover {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Calorie estimation note */
+    .info-note {
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 24px;
+      display: flex;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .info-note i { color: var(--primary); flex-shrink: 0; margin-top: 2px; }
+
+    /* Mobile Bottom Navigation */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      padding: 0 12px;
+    }
+
+    .mobile-nav-list {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 100%;
+      list-style: none;
+    }
+
+    .mobile-nav-item a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .mobile-nav-item.active a { color: var(--primary); }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .profile-split { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-wrapper { margin-left: 0; padding-bottom: 64px; }
+      .mobile-nav { display: block; }
+      .top-header { padding: 0 16px; }
+      .content-body { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <span class="brand-name">UtilMint</span>
+      </div>
+
+      <nav>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="index.html">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="startactivity.html">
+              <i data-lucide="play-circle"></i>
+              <span>Start Activity</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="progress.html">
+              <i data-lucide="line-chart"></i>
+              <span>Progress</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="goals.html">
+              <i data-lucide="target"></i>
+              <span>Goals</span>
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a href="profile.html">
+              <i data-lucide="user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+      
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1>User Profile</h1>
+          <p>Personal stats & unit settings</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="unit-toggle" id="unitToggleBtn">
+            <i data-lucide="ruler"></i>
+            <span id="unitText">KM</span>
+          </button>
+
+          <button class="theme-toggle" id="themeToggleBtn">
+            <i data-lucide="sun" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <main class="content-body">
+        
+        <div class="profile-split">
+          
+          <!-- LEFT AVATAR CARD -->
+          <div class="card avatar-card">
+            <div class="avatar-wrapper" id="avatarInitial">U</div>
+            <div class="user-name-title" id="displayName">UtilMint User</div>
+            <div class="user-bio-subtitle" id="displayBio">Set your profile bio below</div>
+
+            <div class="summary-pills">
+              <div class="pill-item">
+                <span>Workouts Completed:</span>
+                <span id="profileTotalWorkouts">0</span>
+              </div>
+              <div class="pill-item">
+                <span>Total Distance:</span>
+                <span id="profileTotalDist">0.00 km</span>
+              </div>
+              <div class="pill-item">
+                <span>Est. Calories Burned:</span>
+                <span id="profileTotalCalories">0 kcal</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT FORM CARD -->
+          <div class="card">
+            <div class="section-title">
+              <i data-lucide="user-check"></i>
+              <span>Personal Information</span>
+            </div>
+
+            <form id="profileForm">
+              <div class="form-grid">
+                
+                <div class="form-group">
+                  <label for="inputName">Full Name</label>
+                  <input type="text" id="inputName" class="form-control" placeholder="e.g. Jane Doe">
+                </div>
+
+                <div class="form-group">
+                  <label for="inputAge">Age (Years)</label>
+                  <input type="number" id="inputAge" class="form-control" placeholder="e.g. 28" min="1" max="120">
+                </div>
+
+                <div class="form-group">
+                  <label for="inputWeight">Weight (kg)</label>
+                  <input type="number" id="inputWeight" class="form-control" placeholder="e.g. 70" min="20" max="300" step="0.1">
+                </div>
+
+                <div class="form-group">
+                  <label for="inputHeight">Height (cm)</label>
+                  <input type="number" id="inputHeight" class="form-control" placeholder="e.g. 175" min="50" max="250">
+                </div>
+
+                <div class="form-group">
+                  <label for="inputUnit">Preferred Unit System</label>
+                  <select id="inputUnit" class="form-control">
+                    <option value="KM">Metric (KM, km/h)</option>
+                    <option value="MI">Imperial (Miles, mph)</option>
+                  </select>
+                </div>
+
+                <div class="form-group full">
+                  <label for="inputBio">Bio / Fitness Goals</label>
+                  <textarea id="inputBio" class="form-control" rows="3" placeholder="Describe your athletic goals..."></textarea>
+                </div>
+
+              </div>
+
+              <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center;">
+                <button type="submit" class="btn-primary">
+                  <i data-lucide="save"></i>
+                  <span>Save Profile</span>
+                </button>
+
+                <button type="button" class="btn-danger-outline" id="clearDataBtn">
+                  Clear All Real Data
+                </button>
+              </div>
+            </form>
+
+            <div class="info-note">
+              <i data-lucide="info"></i>
+              <div>
+                <strong>Transparent Calorie Estimation:</strong>
+                Calorie statistics are dynamically calculated using standard MET formulas (Running ~9.8 METs, Jogging ~7.0 METs, Walking ~3.8 METs) based strictly on your recorded active duration and entered body weight.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- MOBILE NAVIGATION -->
+    <nav class="mobile-nav">
+      <ul class="mobile-nav-list">
+        <li class="mobile-nav-item">
+          <a href="index.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="startactivity.html"><i data-lucide="play-circle"></i><span>Start</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="progress.html"><i data-lucide="line-chart"></i><span>Progress</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="goals.html"><i data-lucide="target"></i><span>Goals</span></a>
+        </li>
+        <li class="mobile-nav-item active">
+          <a href="profile.html"><i data-lucide="user"></i><span>Profile</span></a>
+        </li>
+      </ul>
+    </nav>
+
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DATA & STORAGE UTILITIES
+       ========================================================================== */
+    const STORAGE_KEYS = {
+      ACTIVITIES: 'utilmint_activities',
+      PROFILE: 'utilmint_profile',
+      SETTINGS: 'utilmint_settings'
+    };
+
+    function getSettings() {
+      const defaults = { theme: 'light', unit: 'KM' };
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
+      } catch (e) { return defaults; }
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    }
+
+    function getStoredProfile() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.PROFILE);
+        return stored ? JSON.parse(stored) : {};
+      } catch (e) { return {}; }
+    }
+
+    function saveProfile(profile) {
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+    }
+
+    function getStoredActivities() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) { return []; }
+    }
+
+    function convertDistance(km, unit) {
+      return unit === 'MI' ? km * 0.621371 : km;
+    }
+
+    /* ==========================================================================
+       REAL CALORIE CALCULATIONS (MET METHOD)
+       ========================================================================== */
+    function calculateTotalCalories(activities, weightKg) {
+      if (!weightKg || weightKg <= 0) return null; // Requires user weight
+
+      let totalKcal = 0;
+
+      activities.forEach(act => {
+        const hours = (act.durationSeconds || 0) / 3600;
+        let met = 7.0; // default
+        if (act.type === 'running') met = 9.8;
+        else if (act.type === 'jogging') met = 7.0;
+        else if (act.type === 'walking') met = 3.8;
+
+        // Formula: Calories = MET * Weight(kg) * Duration(Hours)
+        totalKcal += (met * weightKg * hours);
+      });
+
+      return Math.round(totalKcal);
+    }
+
+    /* ==========================================================================
+       RENDER PROFILE & STATS
+       ========================================================================== */
+    function renderProfilePage() {
+      const profile = getStoredProfile();
+      const settings = getSettings();
+      const activities = getStoredActivities();
+      const unitLabel = settings.unit.toLowerCase();
+
+      // Populate Form Fields
+      document.getElementById('inputName').value = profile.name || '';
+      document.getElementById('inputAge').value = profile.age || '';
+      document.getElementById('inputWeight').value = profile.weight || '';
+      document.getElementById('inputHeight').value = profile.height || '';
+      document.getElementById('inputBio').value = profile.bio || '';
+      document.getElementById('inputUnit').value = settings.unit;
+
+      // Populate Left Card UI
+      const name = profile.name || 'UtilMint Runner';
+      document.getElementById('displayName').textContent = name;
+      document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('displayBio').textContent = profile.bio || 'Complete your profile to personalize activity tracking.';
+
+      // Calculate Total Activity Metrics
+      let totalKm = 0;
+      activities.forEach(a => totalKm += (a.distanceKm || 0));
+
+      const displayDist = convertDistance(totalKm, settings.unit).toFixed(2);
+      document.getElementById('profileTotalWorkouts').textContent = activities.length;
+      document.getElementById('profileTotalDist').textContent = `${displayDist} ${unitLabel}`;
+
+      // Transparent Calorie Estimation
+      const weight = parseFloat(profile.weight);
+      const estCalories = calculateTotalCalories(activities, weight);
+
+      if (estCalories !== null) {
+        document.getElementById('profileTotalCalories').textContent = `${estCalories} kcal`;
+      } else {
+        document.getElementById('profileTotalCalories').textContent = 'Enter weight to estimate';
+      }
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const profile = {
+        name: document.getElementById('inputName').value.trim(),
+        age: document.getElementById('inputAge').value,
+        weight: document.getElementById('inputWeight').value,
+        height: document.getElementById('inputHeight').value,
+        bio: document.getElementById('inputBio').value.trim()
+      };
+
+      const selectedUnit = document.getElementById('inputUnit').value;
+
+      saveProfile(profile);
+
+      const settings = getSettings();
+      settings.unit = selectedUnit;
+      saveSettings(settings);
+
+      document.getElementById('unitText').textContent = selectedUnit;
+      renderProfilePage();
+      alert("Profile updated successfully!");
+    }
+
+    function clearAllUserData() {
+      if (confirm("Are you sure you want to clear ALL saved workout data and settings? This action cannot be undone.")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    /* ==========================================================================
+       THEME & INIT
+       ========================================================================== */
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const themeIcon = document.getElementById('themeIcon');
+      if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+        lucide.createIcons();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const settings = getSettings();
+      applyTheme(settings.theme);
+      document.getElementById('unitText').textContent = settings.unit;
+
+      renderProfilePage();
+
+      document.getElementById('profileForm').addEventListener('submit', handleFormSubmit);
+      document.getElementById('clearDataBtn').addEventListener('click', clearAllUserData);
+
+      document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.theme = current.theme === 'light' ? 'dark' : 'light';
+        saveSettings(current);
+        applyTheme(current.theme);
+      });
+
+      document.getElementById('unitToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.unit = current.unit === 'KM' ? 'MI' : 'KM';
+        saveSettings(current);
+        document.getElementById('unitText').textContent = current.unit;
+        renderProfilePage();
+      });
+
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

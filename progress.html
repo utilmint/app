@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UtilMint - Progress & Analytics</title>
+  <!-- Google Fonts, Lucide Icons, and Chart.js CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEME SETUP
+       ========================================================================== */
+    :root {
+      --primary: #10B981;
+      --primary-hover: #059669;
+      --primary-light: #ECFDF5;
+      --primary-glow: rgba(16, 185, 129, 0.15);
+
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-sidebar: #FFFFFF;
+      --border: #E2E8F0;
+
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-white: #FFFFFF;
+
+      --accent-run: #10B981;
+      --accent-jog: #F97316;
+      --accent-walk: #8B5CF6;
+      --accent-blue: #3B82F6;
+      --accent-gold: #F59E0B;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.03);
+
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0F172A;
+      --bg-card: #1E293B;
+      --bg-sidebar: #1E293B;
+      --border: #334155;
+
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+
+      --primary-light: rgba(16, 185, 129, 0.1);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+    }
+
+    /* Reset & Base Styles */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ==========================================================================
+       LAYOUT STRUCTURE
+       ========================================================================== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 260px;
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px 28px 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), #34D399);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .brand-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-main), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .nav-item a:hover {
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-item.active a {
+      background-color: var(--primary);
+      color: var(--text-white);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .main-wrapper {
+      flex: 1;
+      margin-left: 260px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .top-header {
+      height: 72px;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    .header-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .header-title p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle, .unit-toggle {
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover, .unit-toggle:hover {
+      border-color: var(--primary);
+    }
+
+    /* Progress Main Body */
+    .content-body {
+      padding: 32px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Personal Records Grid */
+    .records-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .record-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .record-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+
+    .record-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-white);
+      flex-shrink: 0;
+    }
+
+    .record-icon.dist { background: linear-gradient(135deg, #10B981, #059669); }
+    .record-icon.pace { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+    .record-icon.time { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
+    .record-icon.day  { background: linear-gradient(135deg, #F59E0B, #D97706); }
+
+    .record-info h4 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .record-info .record-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .record-info .record-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Charts Section */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 280px;
+    }
+
+    /* Table / Filter List Section */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-select {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .activity-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .activity-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .activity-table th {
+      background-color: var(--bg-main);
+      color: var(--text-muted);
+      padding: 12px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .activity-table tr:hover td {
+      background-color: var(--primary-light);
+    }
+
+    .badge-type {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: capitalize;
+      display: inline-block;
+    }
+
+    .badge-type.running { background-color: rgba(16, 185, 129, 0.15); color: var(--accent-run); }
+    .badge-type.jogging { background-color: rgba(249, 115, 22, 0.15); color: var(--accent-jog); }
+    .badge-type.walking { background-color: rgba(139, 92, 246, 0.15); color: var(--accent-walk); }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #EF4444;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .btn-delete:hover {
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Empty Chart / List Overlay */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .empty-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      max-width: 320px;
+    }
+
+    /* Mobile Nav */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background-color: var(--bg-card);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+      padding: 0 12px;
+    }
+
+    .mobile-nav-list {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 100%;
+      list-style: none;
+    }
+
+    .mobile-nav-item a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .mobile-nav-item.active a { color: var(--primary); }
+
+    @media (max-width: 1024px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main-wrapper { margin-left: 0; padding-bottom: 64px; }
+      .mobile-nav { display: block; }
+      .top-header { padding: 0 16px; }
+      .content-body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <i data-lucide="activity"></i>
+        </div>
+        <span class="brand-name">UtilMint</span>
+      </div>
+
+      <nav>
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="index.html">
+              <i data-lucide="layout-dashboard"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="startactivity.html">
+              <i data-lucide="play-circle"></i>
+              <span>Start Activity</span>
+            </a>
+          </li>
+          <li class="nav-item active">
+            <a href="progress.html">
+              <i data-lucide="line-chart"></i>
+              <span>Progress</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="goals.html">
+              <i data-lucide="target"></i>
+              <span>Goals</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="profile.html">
+              <i data-lucide="user"></i>
+              <span>Profile</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+      <!-- TOP HEADER -->
+      <header class="top-header">
+        <div class="header-title">
+          <h1>Progress & Analytics</h1>
+          <p>Real performance data from your recorded sessions</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="unit-toggle" id="unitToggleBtn">
+            <i data-lucide="ruler"></i>
+            <span id="unitText">KM</span>
+          </button>
+
+          <button class="theme-toggle" id="themeToggleBtn">
+            <i data-lucide="sun" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <main class="content-body">
+        
+        <!-- PERSONAL RECORDS SECTION -->
+        <div class="section-label">Personal Records</div>
+
+        <section class="records-grid">
+          <div class="record-card">
+            <div class="record-icon dist">
+              <i data-lucide="trophy"></i>
+            </div>
+            <div class="record-info">
+              <h4>Longest Distance</h4>
+              <div class="record-val" id="recLongestDist">--</div>
+              <div class="record-sub" id="recLongestDistDate">No records yet</div>
+            </div>
+          </div>
+
+          <div class="record-card">
+            <div class="record-icon pace">
+              <i data-lucide="zap"></i>
+            </div>
+            <div class="record-info">
+              <h4>Fastest Pace</h4>
+              <div class="record-val" id="recFastestPace">--'--"</div>
+              <div class="record-sub" id="recFastestPaceSub">No records yet</div>
+            </div>
+          </div>
+
+          <div class="record-card">
+            <div class="record-icon time">
+              <i data-lucide="clock"></i>
+            </div>
+            <div class="record-info">
+              <h4>Longest Duration</h4>
+              <div class="record-val" id="recLongestDuration">00:00:00</div>
+              <div class="record-sub" id="recLongestDurationDate">No records yet</div>
+            </div>
+          </div>
+
+          <div class="record-card">
+            <div class="record-icon day">
+              <i data-lucide="calendar"></i>
+            </div>
+            <div class="record-info">
+              <h4>Most Active Day</h4>
+              <div class="record-val" id="recMostActiveDay">--</div>
+              <div class="record-sub" id="recMostActiveDaySub">No records yet</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CHARTS SECTION -->
+        <div class="charts-grid">
+          <div class="card">
+            <div class="section-label" style="margin-bottom:16px;">
+              <span>Weekly Distance Trend</span>
+            </div>
+            <div class="chart-container" id="barChartWrapper">
+              <canvas id="weeklyDistanceChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-label" style="margin-bottom:16px;">
+              <span>Activity Breakdown</span>
+            </div>
+            <div class="chart-container" id="pieChartWrapper">
+              <canvas id="activityBreakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORY TABLE -->
+        <div class="card">
+          <div class="filter-bar">
+            <div class="section-label" style="margin-bottom:0;">
+              <span>Activity History</span>
+            </div>
+
+            <div style="display:flex; gap:12px;">
+              <select class="filter-select" id="typeFilter">
+                <option value="all">All Activities</option>
+                <option value="running">Running</option>
+                <option value="jogging">Jogging</option>
+                <option value="walking">Walking</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="activity-table-wrapper" id="historyTableContainer">
+            <!-- Table dynamically rendered here or Empty State -->
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- MOBILE NAVIGATION -->
+    <nav class="mobile-nav">
+      <ul class="mobile-nav-list">
+        <li class="mobile-nav-item">
+          <a href="index.html"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="startactivity.html"><i data-lucide="play-circle"></i><span>Start</span></a>
+        </li>
+        <li class="mobile-nav-item active">
+          <a href="progress.html"><i data-lucide="line-chart"></i><span>Progress</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="goals.html"><i data-lucide="target"></i><span>Goals</span></a>
+        </li>
+        <li class="mobile-nav-item">
+          <a href="profile.html"><i data-lucide="user"></i><span>Profile</span></a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DATA & STORAGE UTILITIES
+       ========================================================================== */
+    const STORAGE_KEYS = {
+      ACTIVITIES: 'utilmint_activities',
+      SETTINGS: 'utilmint_settings'
+    };
+
+    let barChartInstance = null;
+    let pieChartInstance = null;
+
+    function getSettings() {
+      const defaults = { theme: 'light', unit: 'KM' };
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+        return stored ? { ...defaults, ...JSON.parse(stored) } : defaults;
+      } catch (e) { return defaults; }
+    }
+
+    function saveSettings(settings) {
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    }
+
+    function getStoredActivities() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) { return []; }
+    }
+
+    function formatTimeHHMMSS(totalSeconds) {
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return [h, m, s].map(v => v < 10 ? '0' + v : v).join(':');
+    }
+
+    function convertDistance(km, unit) {
+      return unit === 'MI' ? km * 0.621371 : km;
+    }
+
+    /* ==========================================================================
+       COMPUTE RECORDS & CHARTS
+       ========================================================================== */
+    function renderProgressPage() {
+      const activities = getStoredActivities();
+      const settings = getSettings();
+      const unitLabel = settings.unit.toLowerCase();
+
+      // Compute Personal Records
+      if (activities.length > 0) {
+        let longestKm = 0;
+        let longestDistAct = null;
+
+        let fastestPaceSec = Infinity;
+        let fastestPaceAct = null;
+
+        let longestDurationSec = 0;
+        let longestDurationAct = null;
+
+        const dayDistanceMap = {}; // 'YYYY-MM-DD' => totalKm
+
+        activities.forEach(act => {
+          const km = act.distanceKm || 0;
+          const secs = act.durationSeconds || 0;
+          const dateStr = new Date(act.timestamp).toLocaleDateString();
+
+          // Longest Distance
+          if (km > longestKm) {
+            longestKm = km;
+            longestDistAct = act;
+          }
+
+          // Longest Duration
+          if (secs > longestDurationSec) {
+            longestDurationSec = secs;
+            longestDurationAct = act;
+          }
+
+          // Fastest Pace (sec/km or sec/mi)
+          const distConverted = convertDistance(km, settings.unit);
+          if (distConverted > 0.1 && secs > 0) {
+            const paceSec = secs / distConverted;
+            if (paceSec < fastestPaceSec) {
+              fastestPaceSec = paceSec;
+              fastestPaceAct = act;
+            }
+          }
+
+          // Most Active Day
+          dayDistanceMap[dateStr] = (dayDistanceMap[dateStr] || 0) + km;
+        });
+
+        // Set Records UI
+        if (longestDistAct) {
+          const val = convertDistance(longestKm, settings.unit).toFixed(2);
+          document.getElementById('recLongestDist').textContent = `${val} ${unitLabel}`;
+          document.getElementById('recLongestDistDate').textContent = new Date(longestDistAct.timestamp).toLocaleDateString();
+        }
+
+        if (longestDurationAct) {
+          document.getElementById('recLongestDuration').textContent = formatTimeHHMMSS(longestDurationSec);
+          document.getElementById('recLongestDurationDate').textContent = new Date(longestDurationAct.timestamp).toLocaleDateString();
+        }
+
+        if (fastestPaceAct && fastestPaceSec !== Infinity) {
+          const mins = Math.floor(fastestPaceSec / 60);
+          const secs = Math.floor(fastestPaceSec % 60);
+          document.getElementById('recFastestPace').textContent = `${mins}'${secs < 10 ? '0' + secs : secs}"`;
+          document.getElementById('recFastestPaceSub').textContent = `per ${unitLabel}`;
+        }
+
+        // Find Most Active Day
+        let maxDay = '--';
+        let maxDayKm = 0;
+        Object.keys(dayDistanceMap).forEach(d => {
+          if (dayDistanceMap[d] > maxDayKm) {
+            maxDayKm = dayDistanceMap[d];
+            maxDay = d;
+          }
+        });
+        if (maxDayKm > 0) {
+          const val = convertDistance(maxDayKm, settings.unit).toFixed(2);
+          document.getElementById('recMostActiveDay').textContent = `${val} ${unitLabel}`;
+          document.getElementById('recMostActiveDaySub').textContent = maxDay;
+        }
+
+      } else {
+        // Reset Empty Records UI
+        document.getElementById('recLongestDist').textContent = '--';
+        document.getElementById('recLongestDistDate').textContent = 'No records yet';
+        document.getElementById('recFastestPace').textContent = `--'--"`;
+        document.getElementById('recFastestPaceSub').textContent = 'No records yet';
+        document.getElementById('recLongestDuration').textContent = '00:00:00';
+        document.getElementById('recLongestDurationDate').textContent = 'No records yet';
+        document.getElementById('recMostActiveDay').textContent = '--';
+        document.getElementById('recMostActiveDaySub').textContent = 'No records yet';
+      }
+
+      // Render Charts & Table
+      renderCharts(activities, settings);
+      renderHistoryTable(activities, settings);
+    }
+
+    /* ==========================================================================
+       DYNAMIC CHARTS (CHART.JS)
+       ========================================================================== */
+    function renderCharts(activities, settings) {
+      const isDark = settings.theme === 'dark';
+      const textColor = isDark ? '#94A3B8' : '#64748B';
+      const gridColor = isDark ? '#334155' : '#E2E8F0';
+
+      // 1. Weekly Distance Bar Chart (Last 7 Days)
+      const last7Days = [];
+      const dayLabels = [];
+      const dayDistances = [0, 0, 0, 0, 0, 0, 0];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(0,0,0,0);
+        last7Days.push(d);
+        dayLabels.push(d.toLocaleDateString(undefined, { weekday: 'short' }));
+      }
+
+      activities.forEach(act => {
+        const actDate = new Date(act.timestamp);
+        actDate.setHours(0,0,0,0);
+        const idx = last7Days.findIndex(d => d.getTime() === actDate.getTime());
+        if (idx !== -1) {
+          const convertedDist = convertDistance(act.distanceKm || 0, settings.unit);
+          dayDistances[idx] += convertedDist;
+        }
+      });
+
+      const ctxBar = document.getElementById('weeklyDistanceChart').getContext('2d');
+      if (barChartInstance) barChartInstance.destroy();
+
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: dayLabels,
+          datasets: [{
+            label: `Distance (${settings.unit})`,
+            data: dayDistances.map(v => v.toFixed(2)),
+            backgroundColor: '#10B981',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: textColor }, grid: { display: false } },
+            y: { ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true }
+          }
+        }
+      });
+
+      // 2. Activity Type Breakdown Pie Chart
+      const typeCounts = { running: 0, jogging: 0, walking: 0 };
+      activities.forEach(act => {
+        const t = act.type || 'running';
+        if (typeCounts[t] !== undefined) typeCounts[t]++;
+      });
+
+      const ctxPie = document.getElementById('activityBreakdownChart').getContext('2d');
+      if (pieChartInstance) pieChartInstance.destroy();
+
+      const totalActivities = activities.length;
+
+      if (totalActivities === 0) {
+        document.getElementById('pieChartWrapper').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i data-lucide="pie-chart"></i></div>
+            <div class="empty-title">No chart data</div>
+            <div class="empty-desc">Complete activities to view type breakdown</div>
+          </div>
+        `;
+        lucide.createIcons();
+      } else {
+        // Restore canvas if overwritten
+        document.getElementById('pieChartWrapper').innerHTML = `<canvas id="activityBreakdownChart"></canvas>`;
+        const newCtxPie = document.getElementById('activityBreakdownChart').getContext('2d');
+
+        pieChartInstance = new Chart(newCtxPie, {
+          type: 'doughnut',
+          data: {
+            labels: ['Running', 'Jogging', 'Walking'],
+            datasets: [{
+              data: [typeCounts.running, typeCounts.jogging, typeCounts.walking],
+              backgroundColor: ['#10B981', '#F97316', '#8B5CF6']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: 600 } }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    /* ==========================================================================
+       HISTORY TABLE & DELETE ACTION
+       ========================================================================== */
+    function renderHistoryTable(activities, settings) {
+      const container = document.getElementById('historyTableContainer');
+      const filterType = document.getElementById('typeFilter').value;
+
+      let filtered = [...activities];
+      if (filterType !== 'all') {
+        filtered = filtered.filter(a => a.type === filterType);
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i data-lucide="history"></i></div>
+            <div class="empty-title">No matching activity history</div>
+            <div class="empty-desc">Record workouts using the Start Activity tool to track history here.</div>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      // Sort Descending by Date
+      filtered.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      let html = `
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Date & Time</th>
+              <th>Distance</th>
+              <th>Duration</th>
+              <th>Avg Pace</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      filtered.forEach(act => {
+        const dist = convertDistance(act.distanceKm || 0, settings.unit).toFixed(2);
+        const unitLabel = settings.unit.toLowerCase();
+        const secs = act.durationSeconds || 0;
+        const durStr = formatTimeHHMMSS(secs);
+        const dateStr = new Date(act.timestamp).toLocaleString(undefined, {
+          month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        const distConverted = convertDistance(act.distanceKm || 0, settings.unit);
+        let paceStr = `--'--"`;
+        if (distConverted > 0.05 && secs > 0) {
+          const paceSec = secs / distConverted;
+          const pMins = Math.floor(paceSec / 60);
+          const pSecs = Math.floor(paceSec % 60);
+          paceStr = `${pMins}'${pSecs < 10 ? '0' + pSecs : pSecs}" /${unitLabel}`;
+        }
+
+        html += `
+          <tr>
+            <td><span class="badge-type ${act.type}">${act.type}</span></td>
+            <td>${dateStr}</td>
+            <td><strong>${dist} ${unitLabel}</strong></td>
+            <td>${durStr}</td>
+            <td>${paceStr}</td>
+            <td>
+              <button class="btn-delete" onclick="deleteActivity('${act.id}')" title="Delete Activity">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function deleteActivity(id) {
+      if (!confirm("Are you sure you want to delete this activity record?")) return;
+
+      const activities = getStoredActivities();
+      const updated = activities.filter(a => a.id !== id);
+      localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(updated));
+
+      renderProgressPage();
+    }
+
+    /* ==========================================================================
+       THEME & INITIALIZATION
+       ========================================================================== */
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const themeIcon = document.getElementById('themeIcon');
+      if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', theme === 'dark' ? 'moon' : 'sun');
+        lucide.createIcons();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const settings = getSettings();
+      applyTheme(settings.theme);
+      document.getElementById('unitText').textContent = settings.unit;
+
+      renderProgressPage();
+
+      document.getElementById('typeFilter').addEventListener('change', () => {
+        renderHistoryTable(getStoredActivities(), getSettings());
+      });
+
+      document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.theme = current.theme === 'light' ? 'dark' : 'light';
+        saveSettings(current);
+        applyTheme(current.theme);
+        renderProgressPage();
+      });
+
+      document.getElementById('unitToggleBtn').addEventListener('click', () => {
+        const current = getSettings();
+        current.unit = current.unit === 'KM' ? 'MI' : 'KM';
+        saveSettings(current);
+        document.getElementById('unitText').textContent = current.unit;
+        renderProgressPage();
+      });
+
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
