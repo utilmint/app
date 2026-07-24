@@ -938,7 +938,7 @@
         return;
       }
 
-      updateGpsStatus('searching', 'Searching for High-Precision (<=1m) GPS...', '--');
+      updateGpsStatus('searching', 'Searching for GPS signal...', '--');
 
       const options = {
         enableHighAccuracy: true,
@@ -955,27 +955,27 @@
       const accuracy = position.coords.accuracy; // meters
       const speed = position.coords.speed; // m/s (can be null)
 
-      // Strict enforcement: Discard any location update above 1 meter accuracy
-      if (accuracy > 1) {
-        updateGpsStatus('error', 'Filtering: Waiting for <= 1m accuracy signal', `±${accuracy.toFixed(1)}m`);
-        return;
-      }
-
-      updateGpsStatus('connected', 'GPS Signal Active (High Accuracy)', `±${accuracy.toFixed(1)}m`);
-      document.getElementById('displayCoords').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      updateGpsStatus('connected', 'GPS Signal Active', `±${Math.round(accuracy)}m`);
+      document.getElementById('displayCoords').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
       const newLatLng = [lat, lng];
 
       // Update Map Marker
       if (!userMarker) {
         userMarker = L.marker(newLatLng).addTo(map);
-        map.setView(newLatLng, 19); // Maximize zoom for 1m scale
+        map.setView(newLatLng, 17);
       } else {
         userMarker.setLatLng(newLatLng);
       }
 
       // If active session is running and NOT paused, track route & distance
       if (isTracking && !isPaused) {
+        
+        // Filter out poor accuracy fixes (> 30 meters) to avoid GPS jumps
+        if (accuracy > 35) {
+          document.getElementById('gpsStatusText').textContent = 'Low Accuracy (Filtering)';
+          return;
+        }
 
         if (lastPosition) {
           const distMeters = calculateHaversineDistance(
@@ -986,9 +986,9 @@
           const timeDiffSec = (position.timestamp - lastPosition.timestamp) / 1000;
 
           // Reject impossible physical speeds (> 35 km/h for running/walking)
-          const calculatedSpeedKmh = timeDiffSec > 0 ? (distMeters / timeDiffSec) * 3.6 : 0;
+          const calculatedSpeedKmh = (distMeters / timeDiffSec) * 3.6;
 
-          if (distMeters > 0.1 && calculatedSpeedKmh < 35) {
+          if (distMeters > 2 && calculatedSpeedKmh < 35) {
             totalDistanceMeters += distMeters;
             routeCoordinates.push(newLatLng);
             routePolyline.setLatLngs(routeCoordinates);
